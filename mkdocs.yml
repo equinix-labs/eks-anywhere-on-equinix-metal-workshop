@@ -1,7 +1,7 @@
-site_name: "Workshop: Equinix Labs"
+site_name: "Workshop: EKS Anywhere on Equinix Metal"
 
-repo_url: https://github.com/equinix-labs/equinix-labs-workshop
-repo_name: equinix-labs/equinix-labs-workshop
+repo_url: https://github.com/equinix-labs/eks-anywhere-on-equinix-metal-workshop
+repo_name: equinix-labs/eks-anywhere-on-equinix-metal-workshop
 edit_uri: blob/main/docs
 
 extra_css:
@@ -11,9 +11,11 @@ nav:
   - Introduction: index.md
 
   - Parts:
-      - 1. Part 1: parts/part1.md
-      - 2. Part 2: parts/part2.md
-      - 3. Part 3: parts/part3.md
+      - 1. Setup: parts/setup.md
+      - 2. Preparing Bare Metal for EKS Anywhere: parts/infrastructure.md
+      - 3. EKS-A installation and configuration: parts/eksa-install.md
+      - 4. Expanding a cluster: parts/scale-up.md
+      - 5. Using EKS Connector: parts/eks-connector.md
 
   - Conclusion: parts/conclusion.md
 
@@ -44,7 +46,6 @@ theme:
     - search.highlight
     - navigation.footer
     - content.code.copy
-    - navigation.expand
 
 extra:
   social:

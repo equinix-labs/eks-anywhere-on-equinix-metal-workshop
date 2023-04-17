@@ -3,13 +3,13 @@
 
 Thank you for participating in the workshop! Let's recap some of the key takeways that we've learned:
 
-* ...
-* ...
-* ...
-
-## References
+* How configure Equinix Metal environment to run EKS clusters
+* Deploy Equinix Metal devices and configure advanced network settings
+* Scale up cluster adding more worker nodes
 
 ## Next Steps
+
+* Try out the [Terraform Module](https://github.com/equinix-labs/terraform-equinix-metal-eks-anywhere) to automate the entire setup process.
 
 ## Resources
 
