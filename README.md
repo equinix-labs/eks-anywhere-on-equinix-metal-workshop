@@ -4,7 +4,7 @@
 Using this template in a new project? See CONTIBUTING.md for help.
 --->
 
-This repo contains instructions for the ["EKS Anywhere on Equinix Metal" workshop](https://equinix-labs.github.io/eks-anywhere-on-equinix-metal-workshop).
+This repo contains instructions for the ["EKS Anywhere on Equinix Metal workshop"](https://equinix-labs.github.io/eks-anywhere-on-equinix-metal-workshop).
 
 To view the workshop, visit <https://equinix-labs.github.io/eks-anywhere-on-equinix-metal-workshop>
 
