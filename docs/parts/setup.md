@@ -22,7 +22,28 @@ The following tools will be needed on your local development environment where y
 
 If you have never used Equinix Metal before, please follow the [Create an Equinix Metal account](https://equinix-labs.github.io/terraform-on-equinix-workshop/parts/install/#1-create-an-equinix-metal-account) 1,2 and 4 steps or you can watch our [Getting Started with Equinix Metal](https://www.youtube.com/watch?v=5Ax6fKBeg2U&t=153s) video.
 
-### 2. Verify
+### 2. Install and Configure Metal CLI
+
+Once you are familiar with the console you may feel more comfortable managing your Equinix Metal resources with the command-line interface tool [Metal-cli](https://github.com/equinix/metal-cli).
+
+Once installed take [API Key](https://console.equinix.com/users/-/api-keys) from step 1 and register it:
+
+Execute `metal init` and provide the requested information:
+
+```shell
+$ metal init
+
+Equinix Metal API Tokens can be obtained through the portal at https://console.equinix.com/.
+See https://metal.equinix.com/developers/docs/accounts/users/ for more details.
+
+Token (hidden):
+Organization ID [27703148-e7bf-4a2f-95cf-46e7dddb4bb8]:
+Project ID []:
+
+Writing /Users/You/.config/equinix/metal.yaml
+```
+
+### 3. Verify
 
 ```shell
 $ metal organization get

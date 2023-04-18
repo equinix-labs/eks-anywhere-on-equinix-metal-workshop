@@ -87,7 +87,7 @@ echo $LC_POOL_VIP
 controlPlaneConfiguration:
 count: 1
 endpoint:
-    host: "<value of LC_POOL_VIP>"
+  host: "<value of LC_POOL_VIP>"
 ```
 
 #### 6.2. Manually set the `TinkerbellDatacenterConfig` for `spec` resource
@@ -98,7 +98,7 @@ echo $LC_TINK_VIP
 
 ```yaml
 spec:
-    tinkerbellIP: "<value of LC_TINK_VIP>"
+  tinkerbellIP: "<value of LC_TINK_VIP>"
 ```
 
 #### 6.3. Manually set the public ssh key
@@ -115,7 +115,8 @@ ssh-keygen -t rsa
 cat /root/.ssh/id_rsa.pub
 ```
 
-Add content the `id_rsa.pub` content in each `TinkerbellMachineConfig` `users[name=ec2-user].sshAuthorizedKeys`
+Add the `id_rsa.pub` content in each `TinkerbellMachineConfig` `users[name=ec2-user].sshAuthorizedKeys`
+
 
 #### 6.4. Manually set the hardwareSelector for each TinkerbellMachineConfig.
 
@@ -123,7 +124,7 @@ For the control plane machine:
 
 ```sh
 spec:
-    hardwareSelector:
+  hardwareSelector:
     type: cp
 ```
 
@@ -131,7 +132,7 @@ For the worker machine:
 
 ```sh
 spec:
-    hardwareSelector:
+  hardwareSelector:
     type: worker
 ```
 
@@ -139,8 +140,8 @@ spec:
 
 ```sh
 templateRef:
-    kind: TinkerbellTemplateConfig
-    name: $CLUSTER_NAME
+  kind: TinkerbellTemplateConfig
+  name: $CLUSTER_NAME
 ```
 
 #### 6.6. Append the following Tinkerbell settings to the config cluster file
@@ -150,23 +151,23 @@ cat << EOF >> $CLUSTER_NAME.yaml
 apiVersion: anywhere.eks.amazonaws.com/v1alpha1
 kind: TinkerbellTemplateConfig
 metadata:
-    name: ${CLUSTER_NAME}
+  name: ${CLUSTER_NAME}
 spec:
-    template:
+  template:
     global_timeout: 6000
     id: ""
     name: ${CLUSTER_NAME}
     tasks:
     - actions:
-        - environment:
-            COMPRESSED: "true"
-            DEST_DISK: /dev/sda
-            IMG_URL: https://anywhere-assets.eks.amazonaws.com/releases/bundles/29/artifacts/raw/1-25/bottlerocket-v1.25.6-eks-d-1-25-7-eks-a-29-amd64.img.gz
+      - environment:
+          COMPRESSED: "true"
+          DEST_DISK: /dev/sda
+          IMG_URL: https://anywhere-assets.eks.amazonaws.com/releases/bundles/29/artifacts/raw/1-25/bottlerocket-v1.25.  6-eks-d-1-25-7-eks-a-29-amd64.img.gz
         image: public.ecr.aws/eks-anywhere/tinkerbell/hub/image2disk:6c0f0d437bde2c836d90b000312c8b25fa1b65e1-eks-a-29
         name: stream-image
         timeout: 600
-        - environment:
-            CONTENTS: |
+      - environment:
+          CONTENTS: |
             # Version is required, it will change as we support
             # additional settings
             version = 1
@@ -182,58 +183,58 @@ spec:
             # "primary" set, we choose the first interface in
             # the file
             primary = true
-            DEST_DISK: /dev/sda12
-            DEST_PATH: /net.toml
-            DIRMODE: "0755"
-            FS_TYPE: ext4
-            GID: "0"
-            MODE: "0644"
-            UID: "0"
+          DEST_DISK: /dev/sda12
+          DEST_PATH: /net.toml
+          DIRMODE: "0755"
+          FS_TYPE: ext4
+          GID: "0"
+          MODE: "0644"
+          UID: "0"
         image: public.ecr.aws/eks-anywhere/tinkerbell/hub/writefile:6c0f0d437bde2c836d90b000312c8b25fa1b65e1-eks-a-29
         name: write-netplan
         pid: host
         timeout: 90
-        - environment:
-            BOOTCONFIG_CONTENTS: |
+      - environment:
+          BOOTCONFIG_CONTENTS: |
             kernel {
                 console = "ttyS1,115200n8"
             }
-            DEST_DISK: /dev/sda12
-            DEST_PATH: /bootconfig.data
-            DIRMODE: "0700"
-            FS_TYPE: ext4
-            GID: "0"
-            MODE: "0644"
-            UID: "0"
+          DEST_DISK: /dev/sda12
+          DEST_PATH: /bootconfig.data
+          DIRMODE: "0700"
+          FS_TYPE: ext4
+          GID: "0"
+          MODE: "0644"
+          UID: "0"
         image: public.ecr.aws/eks-anywhere/tinkerbell/hub/writefile:6c0f0d437bde2c836d90b000312c8b25fa1b65e1-eks-a-29
         name: write-bootconfig
         pid: host
         timeout: 90
-        - environment:
-            DEST_DISK: /dev/sda12
-            DEST_PATH: /user-data.toml
-            DIRMODE: "0700"
-            FS_TYPE: ext4
-            GID: "0"
-            HEGEL_URLS: http://${LC_POOL_ADMIN}:50061,http://${LC_TINK_VIP}:50061
-            MODE: "0644"
-            UID: "0"
+      - environment:
+          DEST_DISK: /dev/sda12
+          DEST_PATH: /user-data.toml
+          DIRMODE: "0700"
+          FS_TYPE: ext4
+          GID: "0"
+          HEGEL_URLS: http://${LC_POOL_ADMIN}:50061,http://${LC_TINK_VIP}:50061
+          MODE: "0644"
+          UID: "0"
         image: public.ecr.aws/eks-anywhere/tinkerbell/hub/writefile:6c0f0d437bde2c836d90b000312c8b25fa1b65e1-eks-a-29
         name: write-user-data
         pid: host
         timeout: 90
-        - image: public.ecr.aws/eks-anywhere/tinkerbell/hub/reboot:6c0f0d437bde2c836d90b000312c8b25fa1b65e1-eks-a-29
+      - image: public.ecr.aws/eks-anywhere/tinkerbell/hub/reboot:6c0f0d437bde2c836d90b000312c8b25fa1b65e1-eks-a-29
         name: reboot-image
         pid: host
         timeout: 90
         volumes:
         - /worker:/worker
-        name: ${CLUSTER_NAME}
-        volumes:
+      name: ${CLUSTER_NAME}
+      volumes:
         - /dev:/dev
         - /dev/console:/dev/console
         - /lib/firmware:/lib/firmware:ro
-        worker: '{{.device_1}}'
+      worker: '{{.device_1}}'
     version: "0.1"
 EOF
 ```

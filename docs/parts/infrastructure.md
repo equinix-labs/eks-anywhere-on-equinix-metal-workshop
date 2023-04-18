@@ -11,12 +11,6 @@
 
 Using the [metal-cli](https://github.com/equinix/metal-cli):
 
-Create an [API Key](https://console.equinix.com/users/-/api-keys) and register it with the Metal CLI:
-
-```sh
-metal init
-```
-
 ```sh
 metal device create --plan=m3.small.x86 --metro=da --hostname eksa-admin --operating-system ubuntu_20_04
 ```
