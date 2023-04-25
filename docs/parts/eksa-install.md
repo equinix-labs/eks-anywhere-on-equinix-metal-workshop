@@ -162,7 +162,7 @@ spec:
       - environment:
           COMPRESSED: "true"
           DEST_DISK: /dev/sda
-          IMG_URL: https://anywhere-assets.eks.amazonaws.com/releases/bundles/29/artifacts/raw/1-25/bottlerocket-v1.25.  6-eks-d-1-25-7-eks-a-29-amd64.img.gz
+          IMG_URL: https://anywhere-assets.eks.amazonaws.com/releases/bundles/29/artifacts/raw/1-25/bottlerocket-v1.25.6-eks-d-1-25-7-eks-a-29-amd64.img.gz
         image: public.ecr.aws/eks-anywhere/tinkerbell/hub/image2disk:6c0f0d437bde2c836d90b000312c8b25fa1b65e1-eks-a-29
         name: stream-image
         timeout: 600
