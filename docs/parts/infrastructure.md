@@ -32,20 +32,21 @@ metal ip request --metro da --type public_ipv4 --quantity 16 --tags eksa
 These variables will be referred to in later steps in executable snippets to refer to specific addresses within the pool. The correct IP reservation is chosen by looking for and expecting a single IP reservation to have the "eksa" tag applied.
 
 ```sh
-#Capture the ID, Network, Gateway, and Netmask using jq
+echo "capture the ID, Network, Gateway, and Netmask using jq"
 VLAN_ID=$(metal vlan list -o json | jq -r '.virtual_networks | .[] | select(.vxlan == 1000) | .id')
 POOL_ID=$(metal ip list -o json | jq -r '.[] | select(.tags | contains(["eksa"]))? | .id')
 POOL_NW=$(metal ip list -o json | jq -r '.[] | select(.tags | contains(["eksa"]))? | .network')
 POOL_GW=$(metal ip list -o json | jq -r '.[] | select(.tags | contains(["eksa"]))? | .gateway')
 POOL_NM=$(metal ip list -o json | jq -r '.[] | select(.tags | contains(["eksa"]))? | .netmask')
-# POOL_ADMIN will be assigned to eksa-admin within the VLAN
+echo "define POOL_ADMIN - ip assigned to eksa-admin within the VLAN"
 POOL_ADMIN=$(python3 -c 'import ipaddress; print(str(ipaddress.IPv4Address("'${POOL_GW}'")+1))')
-# PUB_ADMIN is the provisioned IPv4 public address of eks-admin which we can use with ssh
+echo "define PUB_ADMIN - provisioned IPv4 public address of eks-admin which we can use with ssh"
 PUB_ADMIN=$(metal devices list  -o json  | jq -r '.[] | select(.hostname=="eksa-admin") | .ip_addresses [] | select(contains({"public":true,"address_family":4})) | .address')
-# PORT_ADMIN is the bond0 port of the eks-admin machine
+echo "define PORT_ADMIN - the bond0 port of the eks-admin machine"
 PORT_ADMIN=$(metal devices list  -o json  | jq -r '.[] | select(.hostname=="eksa-admin") | .network_ports [] | select(.name == "bond0") | .id')
-# POOL_VIP is the floating IPv4 public address assigned to the current lead kubernetes control plane
+echo "define POOL_VIP - the floating IPv4 public address assigned to the current lead kubernetes control plane"
 POOL_VIP=$(python3 -c 'import ipaddress; print(str(ipaddress.ip_network("'${POOL_NW}'/'${POOL_NM}'").broadcast_address-1))')
+echo "define TINK_VIP - Tinkerbell Host IP"
 TINK_VIP=$(python3 -c 'import ipaddress; print(str(ipaddress.ip_network("'${POOL_NW}'/'${POOL_NM}'").broadcast_address-2))')
 ```
 
@@ -62,7 +63,7 @@ Create two Metal devices `eksa-node-001` - `eksa-node-002` with Custom IPXE <htt
 ```sh
 for a in {1..2}; do
   metal device create --plan m3.small.x86 --metro da --hostname eksa-node-00$a \
-    --ipxe-script-url http://$POOL_ADMIN/ipxe/  --operating-system custom_ipxe
+  --ipxe-script-url http://$POOL_ADMIN/ipxe/  --operating-system custom_ipxe
 done
 ```
 
@@ -101,14 +102,13 @@ ssh root@$PUB_ADMIN systemctl restart networking
 ```sh
 node_ids=$(metal devices list -o json | jq -r '.[] | select(.hostname | startswith("eksa-node")) | .id')
 
-i=1 # We will increment "i" for the eksa-node-* nodes. "1" represents the eksa-admin node.
-
+i=1
 for id in $(echo $node_ids); do
-    let i++
-    BOND0_PORT=$(metal devices get -i $id -o json  | jq -r '.network_ports [] | select(.name == "bond0") | .id')
-    ETH0_PORT=$(metal devices get -i $id -o json  | jq -r '.network_ports [] | select(.name == "eth0") | .id')
-    metal port convert -i $BOND0_PORT --layer2 --bonded=false --force
-    metal port vlan -i $ETH0_PORT -a $VLAN_ID
+  let i++
+  BOND0_PORT=$(metal devices get -i $id -o json  | jq -r '.network_ports [] | select(.name == "bond0") | .id')
+  ETH0_PORT=$(metal devices get -i $id -o json  | jq -r '.network_ports [] | select(.name == "eth0") | .id')
+  metal port convert -i $BOND0_PORT --layer2 --bonded=false --force
+  metal port vlan -i $ETH0_PORT -a $VLAN_ID
 done
 ```
 
@@ -124,19 +124,21 @@ echo hostname,vendor,mac,ip_address,gateway,netmask,nameservers,disk,labels > ha
 
 Use `metal` and `jq` to grab HW MAC addresses and add them to the hardware.csv:
 
+> **_Note:_** below command assumes you are launching a single control-plane node. For HA you may need to change
+> the `if [ "$i" = 1 ];` condition to something like `if [ "$i" <= 3 ];`
+> (the number will depend on your setup, usually 3 or 5 cp nodes)
+
 ```sh
 node_ids=$(metal devices list -o json | jq -r '.[] | select(.hostname | startswith("eksa-node")) | .id')
 
-i=1 # We will increment "i" for the eksa-node-* nodes. "1" represents the eksa-admin node.
-
+i=1
 for id in $(echo $node_ids); do
-    # Configure only the first node as a control-panel node
-    if [ "$i" = 1 ]; then TYPE=cp; else TYPE=worker; fi; # change to 3 for HA
-    NODENAME="eks-node-00$i"
-    let i++
-    MAC=$(metal device get -i $id -o json | jq -r '.network_ports | .[] | select(.name == "eth0") | .data.mac')
-    IP=$(python3 -c 'import ipaddress; print(str(ipaddress.IPv4Address("'${POOL_GW}'")+'$i'))')
-    echo "$NODENAME,Equinix,${MAC},${IP},${POOL_GW},${POOL_NM},8.8.8.8|8.8.4.4,/dev/sda,type=${TYPE}" >> hardware.csv
+  if [ "$i" = 1 ]; then TYPE=cp; else TYPE=worker; fi;
+  NODENAME="eks-node-00$i"
+  let i++
+  MAC=$(metal device get -i $id -o json | jq -r '.network_ports | .[] | select(.name == "eth0") | .data.mac')
+  IP=$(python3 -c 'import ipaddress; print(str(ipaddress.IPv4Address("'${POOL_GW}'")+'$i'))')
+  echo "$NODENAME,Equinix,${MAC},${IP},${POOL_GW},${POOL_NM},8.8.8.8|8.8.4.4,/dev/sda,type=${TYPE}" >> hardware.csv
 done
 ```
 
