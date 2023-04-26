@@ -77,74 +77,43 @@ eksctl anywhere generate clusterconfig $CLUSTER_NAME --provider tinkerbell > $CL
 
 ### 6. Edit generated cluster config file
 
-#### 6.1. Manually set control-plane IP for `Cluster` resource
+#### 6.1. Install yq
 
 ``` sh
-echo $LC_POOL_VIP
+snap install yq
 ```
 
-```yaml
-controlPlaneConfiguration:
-count: 1
-endpoint:
-  host: "<value of LC_POOL_VIP>"
-```
-
-#### 6.2. Manually set the `TinkerbellDatacenterConfig` for `spec` resource
-
-``` sh
-echo $LC_TINK_VIP
-```
-
-```yaml
-spec:
-  tinkerbellIP: "<value of LC_TINK_VIP>"
-```
-
-#### 6.3. Manually set the public ssh key
-
-Configure SSH access by generating a key pair using the RSA algorithm
-
-The SSH Key can be a locally generated on `eksa-admin` (`ssh-keygen -t rsa`) or an existing user key.
+#### 6.2. Generate a public SSH key and store it in a variable called 'SSH_PUBLIC_KEY'
 
 ```sh
-ssh-keygen -t rsa
+ssh-keygen -t rsa -f /root/.ssh/id_rsa -q -N ""
+export SSH_PUBLIC_KEY=$(cat /root/.ssh/id_rsa.pub)
 ```
+
+#### 6.3. Make all necessary changes to the config cluster file
+
+By running below `yq` command you will:
+
+- Set control-plane IP `host` for Cluster resource
+- Set the `tinkerbellIP` in the `TinkerbellDatacenterConfig` resource
+- Set the public SSH key created in the previous step for each `TinkerbellMachineConfig`
+- Set the `hardwareSelector` for each `TinkerbellMachineConfig` - `cp` or `worker`
+- Change the `templateRef` for each `TinkerbellMachineConfig` section - We will add a `TinkerbellTemplateConfig` in next step
 
 ```sh
-cat /root/.ssh/id_rsa.pub
+yq eval -i '
+(select(.kind == "Cluster") | .spec.controlPlaneConfiguration.endpoint.host) = env(LC_POOL_VIP) |
+(select(.kind == "TinkerbellDatacenterConfig") | .spec.tinkerbellIP) = env(LC_TINK_VIP) |
+(select(.kind == "TinkerbellMachineConfig") | (.spec.users[] | select(.name == "ec2-user")).sshAuthorizedKeys) = [env(SSH_PUBLIC_KEY)] |
+(select(.kind == "TinkerbellMachineConfig" and .metadata.name == env(CLUSTER_NAME) + "-cp" ) | .spec.hardwareSelector.type) = "cp" |
+(select(.kind == "TinkerbellMachineConfig" and .metadata.name == env(CLUSTER_NAME)) | .spec.hardwareSelector.type) = "worker" |
+(select(.kind == "TinkerbellMachineConfig") | .spec.templateRef.kind) = "TinkerbellTemplateConfig" |
+(select(.kind == "TinkerbellMachineConfig") | .spec.templateRef.name) = env(CLUSTER_NAME)
+' $CLUSTER_NAME.yaml
 ```
 
-Add the `id_rsa.pub` content in each `TinkerbellMachineConfig` `users[name=ec2-user].sshAuthorizedKeys`
+#### 6.4. Append the following `TinkerbellTemplateConfig` resource with the Tinkerbell settings to the config cluster file
 
-
-#### 6.4. Manually set the hardwareSelector for each TinkerbellMachineConfig.
-
-For the control plane machine:
-
-```sh
-spec:
-  hardwareSelector:
-    type: cp
-```
-
-For the worker machine:
-
-```sh
-spec:
-  hardwareSelector:
-    type: worker
-```
-
-#### 6.5. Manually change the templateRef for each TinkerbellMachineConfig section
-
-```sh
-templateRef:
-  kind: TinkerbellTemplateConfig
-  name: $CLUSTER_NAME
-```
-
-#### 6.6. Append the following Tinkerbell settings to the config cluster file
 ```yaml
 cat << EOF >> $CLUSTER_NAME.yaml
 ---
