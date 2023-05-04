@@ -1,3 +1,6 @@
+<!-- NOTE: This section was removed from mkdocs.yml due to the issue https://github.com/aws/eks-anywhere/issues/5316
+To add it back, both mkdocs.yml and index.md need to be updated accordingly -->
+
 <!-- See https://squidfunk.github.io/mkdocs-material/reference/ -->
 # Part 1: Setup
 
