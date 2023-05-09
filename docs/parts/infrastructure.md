@@ -99,6 +99,8 @@ ssh root@$PUB_ADMIN systemctl restart networking
 
 #### 6.2. Convert `eksa-node-*` 's network ports to Layer2-Unbonded and attach to the VLAN.
 
+> **_Note:_** The `eksa-node-*` nodes must be fulling provisioned before running this step.
+
 ```sh
 node_ids=$(metal devices list -o json | jq -r '.[] | select(.hostname | startswith("eksa-node")) | .id')
 
