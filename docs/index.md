@@ -24,6 +24,5 @@ This workshop is split into four parts:
 | 1 | Setup | 10 minutes |
 | 2 | Preparing Bare Metal for EKS Anywhere | 15 minutes |
 | 3 | EKS-A installation and configuration | 15 minutes |
-<!-- | 4 | Expanding a cluster | 10 minutes | -->
 | 4 | Using EKS Connector | 5 minutes |
 | 5 | Conclusion | 5 minutes |
