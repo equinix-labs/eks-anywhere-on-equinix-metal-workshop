@@ -1,5 +1,5 @@
 <!-- See https://squidfunk.github.io/mkdocs-material/reference/ -->
-# Part 5: Connect the cluster to EKS with EKS Connector
+# Part 4: Connect the cluster to EKS with EKS Connector
 
 This section covers the basic steps to connect your cluster to EKS with the EKS Connector. There are many more details (include pre-requisites like IAM permissions) in the [EKS Connector Documentation](https://docs.aws.amazon.com/eks/latest/userguide/eks-connector.html).
 

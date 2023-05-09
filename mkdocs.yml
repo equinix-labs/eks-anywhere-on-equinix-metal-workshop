@@ -14,8 +14,9 @@ nav:
       - 1. Setup: parts/setup.md
       - 2. Preparing Bare Metal for EKS Anywhere: parts/infrastructure.md
       - 3. EKS-A installation and configuration: parts/eksa-install.md
-      - 4. Expanding a cluster: parts/scale-up.md
-      - 5. Using EKS Connector: parts/eks-connector.md
+      # Section 4 removed - Issue https://github.com/aws/eks-anywhere/issues/5316 must be addressed
+      # - 4. Expanding a cluster: parts/scale-up.md
+      - 4. Using EKS Connector: parts/eks-connector.md
 
   - Conclusion: parts/conclusion.md
 

@@ -77,74 +77,43 @@ eksctl anywhere generate clusterconfig $CLUSTER_NAME --provider tinkerbell > $CL
 
 ### 6. Edit generated cluster config file
 
-#### 6.1. Manually set control-plane IP for `Cluster` resource
+#### 6.1. Install yq
 
 ``` sh
-echo $LC_POOL_VIP
+snap install yq
 ```
 
-```yaml
-controlPlaneConfiguration:
-count: 1
-endpoint:
-  host: "<value of LC_POOL_VIP>"
-```
-
-#### 6.2. Manually set the `TinkerbellDatacenterConfig` for `spec` resource
-
-``` sh
-echo $LC_TINK_VIP
-```
-
-```yaml
-spec:
-  tinkerbellIP: "<value of LC_TINK_VIP>"
-```
-
-#### 6.3. Manually set the public ssh key
-
-Configure SSH access by generating a key pair using the RSA algorithm
-
-The SSH Key can be a locally generated on `eksa-admin` (`ssh-keygen -t rsa`) or an existing user key.
+#### 6.2. Generate a public SSH key and store it in a variable called 'SSH_PUBLIC_KEY'
 
 ```sh
-ssh-keygen -t rsa
+ssh-keygen -t rsa -f /root/.ssh/id_rsa -q -N ""
+export SSH_PUBLIC_KEY=$(cat /root/.ssh/id_rsa.pub)
 ```
+
+#### 6.3. Make all necessary changes to the config cluster file
+
+By running below `yq` command you will:
+
+- Set control-plane IP `host` for Cluster resource
+- Set the `tinkerbellIP` in the `TinkerbellDatacenterConfig` resource
+- Set the public SSH key created in the previous step for each `TinkerbellMachineConfig`
+- Set the `hardwareSelector` for each `TinkerbellMachineConfig` - `cp` or `worker`
+- Change the `templateRef` for each `TinkerbellMachineConfig` section - We will add a `TinkerbellTemplateConfig` in next step
 
 ```sh
-cat /root/.ssh/id_rsa.pub
+yq eval -i '
+(select(.kind == "Cluster") | .spec.controlPlaneConfiguration.endpoint.host) = env(LC_POOL_VIP) |
+(select(.kind == "TinkerbellDatacenterConfig") | .spec.tinkerbellIP) = env(LC_TINK_VIP) |
+(select(.kind == "TinkerbellMachineConfig") | (.spec.users[] | select(.name == "ec2-user")).sshAuthorizedKeys) = [env(SSH_PUBLIC_KEY)] |
+(select(.kind == "TinkerbellMachineConfig" and .metadata.name == env(CLUSTER_NAME) + "-cp" ) | .spec.hardwareSelector.type) = "cp" |
+(select(.kind == "TinkerbellMachineConfig" and .metadata.name == env(CLUSTER_NAME)) | .spec.hardwareSelector.type) = "worker" |
+(select(.kind == "TinkerbellMachineConfig") | .spec.templateRef.kind) = "TinkerbellTemplateConfig" |
+(select(.kind == "TinkerbellMachineConfig") | .spec.templateRef.name) = env(CLUSTER_NAME)
+' $CLUSTER_NAME.yaml
 ```
 
-Add the `id_rsa.pub` content in each `TinkerbellMachineConfig` `users[name=ec2-user].sshAuthorizedKeys`
+#### 6.4. Append the following `TinkerbellTemplateConfig` resource with the Tinkerbell settings to the config cluster file
 
-
-#### 6.4. Manually set the hardwareSelector for each TinkerbellMachineConfig.
-
-For the control plane machine:
-
-```sh
-spec:
-  hardwareSelector:
-    type: cp
-```
-
-For the worker machine:
-
-```sh
-spec:
-  hardwareSelector:
-    type: worker
-```
-
-#### 6.5. Manually change the templateRef for each TinkerbellMachineConfig section
-
-```sh
-templateRef:
-  kind: TinkerbellTemplateConfig
-  name: $CLUSTER_NAME
-```
-
-#### 6.6. Append the following Tinkerbell settings to the config cluster file
 ```yaml
 cat << EOF >> $CLUSTER_NAME.yaml
 ---
@@ -245,11 +214,7 @@ Double check and be sure `$LC_POOL_ADMIN` and `$CLUSTER_NAME` are set correctly 
 
 ```sh
 eksctl anywhere create cluster --filename $CLUSTER_NAME.yaml \
-    --hardware-csv hardware.csv --tinkerbell-bootstrap-ip $LC_POOL_ADMIN
-```
-
-```shell
-ssh -i ~/.ssh/equinix-metal-terraform-rsa root@$(terraform output device_public_ip)
+--hardware-csv hardware.csv --tinkerbell-bootstrap-ip $LC_POOL_ADMIN
 ```
 
 ### 8. Reboot Nodes
@@ -266,7 +231,7 @@ Option 1 - You can use this command to automate it, but you'll need to be back o
 ```sh
 node_ids=$(metal devices list -o json | jq -r '.[] | select(.hostname | startswith("eksa-node")) | .id')
 for id in $(echo $node_ids); do
-    metal device reboot -i $id
+  metal device reboot -i $id
 done
 ```
 
@@ -277,6 +242,50 @@ By default, any existing ssh key in the project can be used to login.
 
 ```sh
 ssh {node-uuid}@sos.{facility-code}.platformequinix.com -i </path/to/ssh-key>
+```
+
+> **_Note:_** After rebooting nodes the `eksctl anywhere create cluster` command output will hang at `Creating new workload cluster` for almost 20 min without any further feedback
+
+### 9. Confirm Success
+
+After 20-30 min you will see the below logs message if the whole process is successful
+
+```sh
+Installing networking on workload cluster
+Creating EKS-A namespace
+Installing cluster-api providers on workload cluster
+Installing EKS-A secrets on workload cluster
+Installing resources on management cluster
+Moving cluster management from bootstrap to workload cluster
+Installing EKS-A custom components (CRD and controller) on workload cluster
+Installing EKS-D components on workload cluster
+Creating EKS-A CRDs instances on workload cluster
+Installing GitOps Toolkit on workload cluster
+GitOps field not specified, bootstrap flux skipped
+Writing cluster config file
+Deleting bootstrap cluster
+:tada: Cluster created!
+--------------------------------------------------------------------------------------
+The Amazon EKS Anywhere Curated Packages are only available to customers with the
+Amazon EKS Anywhere Enterprise Subscription
+--------------------------------------------------------------------------------------
+Enabling curated packages on the cluster
+Installing helm chart on cluster	{"chart": "eks-anywhere-packages", "version": "0.2.30-eks-a-29"}
+```
+
+### 10. Verify the nodes are deployed properly
+
+To verify the nodes are deployed properly, set the generated cluster kubeconfig file as the default k8s config
+
+```sh
+cp /root/$CLUSTER_NAME/$CLUSTER_NAME-eks-a-cluster.kubeconfig /root/.kube/config
+```
+
+You can run now below commands to check nodes and pods in cluster
+
+```sh
+kubectl get nodes -o wide
+kubectl get pods -A
 ```
 
 ## Discussion
