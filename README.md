@@ -1,5 +1,8 @@
 # Workshop: EKS Anywhere on Equinix Metal
 
+> [!WARNING]
+> With the upcoming EoL of Equinix Metal on June 30, 2026, this repo is being archived on February 28, 2026.
+
 <!---
 Using this template in a new project? See CONTIBUTING.md for help.
 --->
